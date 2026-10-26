@@ -1,86 +1,54 @@
+import Pokemon from './pokemon.js';
+import random from './utils.js';
+
 const $btn = document.getElementById('btn-kick');
 
-const character = {
+const player1 = new Pokemon({
     name: 'Pikachu',
-    defaultHP: 100,
-    damageHP: 100,
-    elHP: document.getElementById('health-character'),
-    elProgressbar: document.getElementById('progressbar-character'),
-    renderHP: renderHP,
-    renderHPLife: renderHPLife,
-    renderProgressbarHP: renderProgressbarHP,
-    changeHP: changeHP,
-};
+    type: 'electric',
+    hp: 100,
+    selectors: 'character',
+});
 
-const enemy = {
+const player2 = new Pokemon({
     name: 'Charmander',
-    defaultHP: 100,
-    damageHP: 100,
-    elHP: document.getElementById('health-enemy'),
-    elProgressbar: document.getElementById('progressbar-enemy'),
-    renderHP: renderHP,
-    renderHPLife: renderHPLife,
-    renderProgressbarHP: renderProgressbarHP,
-    changeHP: changeHP,
-};
+    type: 'fire',
+    hp: 100,
+    selectors: 'enemy',
+});
+
+console.log(player1, player2);
+
+function finishGame(losers) {
+    $btn.disabled = true;
+    const text = losers.length > 1
+        ? 'Нічия! Обидва покемони програли бій!'
+        : 'Бідний ' + losers[0].name + ' програв бій!';
+    setTimeout(function () {
+        alert(text);
+    }, 50);
+}
+
+function attack(attacker, target) {
+    target.changeHP(random(20, 5), function (count) {
+        console.log(
+            `${attacker.name} завдав ${count} шкоди → ${target.name}: ` +
+            `${target.hp.current} / ${target.hp.total}`
+        );
+    });
+}
 
 $btn.addEventListener('click', function () {
     console.log('Kick');
-    character.changeHP(random(20));
-    enemy.changeHP(random(20));
+    attack(player2, player1);
+    attack(player1, player2);
+
+    const losers = [player1, player2].filter(p => p.hp.current === 0);
+    if (losers.length && !$btn.disabled) {
+        finishGame(losers);
+    }
 });
 
 document.querySelector('.logo').addEventListener('click', function () {
     location.reload();
 });
-
-function init() {
-    console.log('Start Game!');
-    character.renderHP();
-    enemy.renderHP();
-}
-
-function renderHP() {
-    this.renderHPLife();
-    this.renderProgressbarHP();
-}
-
-function renderHPLife() {
-    this.elHP.innerText = this.damageHP + ' / ' + this.defaultHP;
-}
-
-function renderProgressbarHP() {
-    const percent = this.damageHP / this.defaultHP * 100;
-    this.elProgressbar.style.width = percent + '%';
-
-    this.elProgressbar.classList.remove('low', 'critical');
-    if (percent < 20) {
-        this.elProgressbar.classList.add('critical');
-    } else if (percent < 60) {
-        this.elProgressbar.classList.add('low');
-    }
-}
-
-function changeHP(count) {
-    if (this.damageHP <= count) {
-        this.damageHP = 0;
-    } else {
-        this.damageHP -= count;
-    }
-
-    this.renderHP();
-
-    if (this.damageHP === 0 && !$btn.disabled) {
-        $btn.disabled = true;
-        const name = this.name;
-        setTimeout(function () {
-            alert('Бідний ' + name + ' програв бій!');
-        }, 50);
-    }
-}
-
-function random(num) {
-    return Math.ceil(Math.random() * num);
-}
-
-init();
